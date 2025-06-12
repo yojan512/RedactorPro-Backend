@@ -1,24 +1,37 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const OpenAI = require('openai');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/api/redactar', (req, res) => {
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+app.post('/api/redactar', async (req, res) => {
   const { texto, categoria, formato } = req.body;
 
-  // Simulación sin usar IA real
-  const respuesta = `🧠 Redacción simulada desde el backend:
+  try {
+    const prompt = `Redacta un texto en formato ${formato}, para la categoría ${categoria}, basado en: "${texto}"`;
 
-Formato: ${formato}
-Categoría: ${categoria}
-Texto base: "${texto}"
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 300,
+      temperature: 0.7,
+    });
 
-Resultado generado: Este es un texto simulado generado desde el servidor.`;
+    const resultado = response.choices[0].message.content.trim();
+    console.log("✅ Resultado real de OpenAI:", resultado);
+    res.json({ resultado });
 
-  res.json({ resultado: respuesta });
+  } catch (error) {
+    console.error("❌ Error al generar texto:", error.message);
+    res.status(500).json({ error: "Fallo al generar el texto." });
+  }
 });
 
 const PORT = process.env.PORT || 5000;
