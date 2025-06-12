@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Configurar cliente OpenAI con la clave del .env
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -24,8 +25,16 @@ app.post('/api/redactar', async (req, res) => {
       temperature: 0.7,
     });
 
-    const resultado = response.choices[0].message.content.trim();
-    console.log("✅ Resultado real de OpenAI:", resultado);
+    // Imprimir la respuesta completa en la consola
+    console.log("🧠 Respuesta completa de OpenAI:", JSON.stringify(response, null, 2));
+
+    const resultado = response?.choices?.[0]?.message?.content?.trim();
+
+    if (!resultado) {
+      console.error("⚠️ La respuesta de OpenAI no contiene texto válido.");
+      return res.status(500).json({ error: "No se pudo generar el texto." });
+    }
+
     res.json({ resultado });
 
   } catch (error) {
